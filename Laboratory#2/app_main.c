@@ -45,7 +45,6 @@
 
 // Hardware configuration
 #define LED_GPIO_PIN                            GPIO_NUM_1
-
 #define I2C_PORT_NUMBER                         I2C_NUM_0
 #define I2C_CLK_FREQUENCY                       100000
 #define I2C_SDA_PIN                             GPIO_NUM_4
@@ -53,12 +52,19 @@
 #define I2C_TIMEOUT                             (100 / portTICK_RATE_MS)
 #define I2C_AHT20_ADDRESS                       0x38
 
-
 // Bluetooth configuration (Environmental Sensing Service)
 #define GATT_ESS_UUID                           0x181A
 #define GATT_ESS_TEMPERATURE_UUID               0x2A6E
 #define GATT_ESS_HUMIDITY_UUID                  0x2A6F
 
+// Sensor configuration
+#define CMD_INITIALIZATION                      0xBE
+#define CMD_SOFTRESET                           0xBA
+#define CMD_CALIBRATE                           0x71    
+#define CMD_TRIGGER_MEAS                        0xAC
+
+static uint16_t temperature;
+static int16_t humidity;
 
 static void SetLedState(bool state) {
     gpio_set_direction(LED_GPIO_PIN, GPIO_MODE_OUTPUT);
@@ -69,17 +75,14 @@ static void WaitMs(unsigned delay) {
     vTaskDelay(delay / portTICK_PERIOD_MS);
 }
 
-
 static int GetTemperature(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
-    // int rc = os_mbuf_append(ctxt->om, ...);
-    // return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
-    return BLE_ATT_ERR_INSUFFICIENT_RES;
+    int rc = os_mbuf_append(ctxt->om, &temperature, sizeof(temperature));
+    return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
 }
 
 static int GetHumidity(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
-    // int rc = os_mbuf_append(ctxt->om, ...);
-    // return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
-    return BLE_ATT_ERR_INSUFFICIENT_RES;
+    int rc = os_mbuf_append(ctxt->om, &humidity, sizeof(humidity));
+    return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
 }
 
 static const struct ble_gatt_svc_def kBleServices[] = {
@@ -192,10 +195,48 @@ static void ReadFromTheSensor(uint8_t *buffer, size_t length) {
     i2c_master_read_from_device(I2C_PORT_NUMBER, I2C_AHT20_ADDRESS, buffer, length, I2C_TIMEOUT);
 }
 
+static void GetData()
+{
+    // Reset sensor
+    uint8_t softReset = CMD_SOFTRESET;
+    WriteToTheSensor(&softReset, 1);
+    WaitMs(20);
 
+    // Calibration
+    uint8_t calibrate = CMD_CALIBRATE;
+    WriteToTheSensor(&calibrate, 3);
+    WaitMs(100);
 
+    // Trigger measurement
+    uint8_t triggerMeas = CMD_TRIGGER_MEAS;
+    WriteToTheSensor(&triggerMeas, 3);
+    WaitMs(300);
 
+    // Get measurment data
+    uint8_t dataFrame[6];
+    ReadFromTheSensor(&dataFrame, 6);
 
+    // Evaluate values from I2C frames
+    uint32_t humidityFrame = dataFrame[1];
+    humidityFrame <<= 8;
+    humidityFrame |= dataFrame[2];
+    humidityFrame <<= 4;
+    humidityFrame |= dataFrame[3] >> 4;
+
+    humidity = ((float)humidityFrame * 100) / 1048576; // signal transformation
+
+    uint32_t temperatureFrame = 0x0F | dataFrame[3];
+    temperatureFrame <<= 8;
+    temperatureFrame |= dataFrame[4];
+    temperatureFrame <<=8;
+    temperatureFrame |= dataFrame[5];
+
+    temperature = ((float)temperatureFrame * 200 / 1048576) - 50; // signal transformation
+    temperature *= 0.01;
+
+    printf("Wilgotnosc: %d\n", humidity);
+    printf("Temperatura: %d\n", temperature);
+}
 
 void app_main(void) {
     // Initialize Non-Volatile Memory
@@ -235,9 +276,9 @@ void app_main(void) {
 
     InitializeI2C();
 
-
 error:
     while (1) {
         WaitMs(1000);
+        GetData();
     };
 }
