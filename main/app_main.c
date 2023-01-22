@@ -38,8 +38,11 @@ static int GetHeartRateValue(uint16_t conn_handle, uint16_t attr_handle, struct 
         uint8_t heart_rate;
     } hrm = {
         .contact = 0x06,
-        .heart_rate = 80
+        .heart_rate = 0x00
     };
+    
+    // Set random value for heart_rate from 0 to 255 
+    hrm.heart_rate = esp_random();
 
     int rc = os_mbuf_append(ctxt->om, &hrm, sizeof(hrm));
     return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
