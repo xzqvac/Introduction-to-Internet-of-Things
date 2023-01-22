@@ -18,12 +18,19 @@
 // - file://esp-idf-v4.4.2/components/esp_hw_support/include/esp_random.h
 // - file://esp-idf-v4.4.2/examples/bluetooth/nimble/blehr/main/gatt_svr.c
 
-
 // Heart-rate BLE identifiers
 #define GATT_HRS_UUID                           0x180D
 #define GATT_HRS_MEASUREMENT_UUID               0x2A37
 #define GATT_HRS_BODY_SENSOR_LOC_UUID           0x2A38
 
+// Output for diode
+#define GPIO_OUTPUT_IO_0                        GPIO_NUM_4
+
+// Set diode state
+static void setOutputLevel(bool state){
+    gpio_set_direction(GPIO_OUTPUT_IO_0, GPIO_MODE_OUTPUT);
+    gpio_set_level(GPIO_OUTPUT_IO_0, state ? 1 : 0);
+}
 
 static int GetHeartRateValue(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {
     static struct __attribute__((packed)) {
@@ -76,11 +83,13 @@ static int OnBleGapEvent(struct ble_gap_event *event, void *arg) {
     switch (event->type) {
         case BLE_GAP_EVENT_CONNECT:
             ESP_LOGI("BLE GAP Event", "Connected");
+            setOutputLevel(true);
             break;
 
         case BLE_GAP_EVENT_DISCONNECT:
             ESP_LOGI("BLE GAP Event", "Disconnected");
             StartAdvertisement();
+            setOutputLevel(false);
             break;
 
         default:
@@ -95,6 +104,7 @@ static void StartAdvertisement(void) {
     // Set device name
     const char* name = "ESP32-Radek";
     ble_svc_gap_device_name_set(name);
+
     
     struct ble_gap_adv_params adv_parameters;
     memset(&adv_parameters, 0, sizeof(adv_parameters));
