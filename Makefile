@@ -14,9 +14,6 @@ setup:
 	make setup-idf
 	make setup-flash
 
-setup-light:
-	make setup-idf-light
-
 all:
 	source $(IDF_EXPORT_ENVS) && idf.py build
 
@@ -35,8 +32,7 @@ doc:
 help:
 	@echo "Build project targets are:"
 	@echo ""
-	@echo "  - setup                     create build environment and install all required deps"
-	@echo "  - setup-light               create build environment"
+	@echo "  - setup                     create build environment"
 	@echo "  - all                       compile source code"
 	@echo "  - flash                     install firmware on the target"
 	@echo "  - monitor                   open CPU debug console"
