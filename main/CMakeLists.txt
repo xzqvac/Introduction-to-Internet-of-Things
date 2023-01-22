@@ -1,5 +1,5 @@
 idf_component_register(
-    SRCS    "app_main.c"
+    SRCS    "../Laboratory#2/app_main.c"
 
     INCLUDE_DIRS    ${CMAKE_SOURCE_DIR}/main
                     $ENV{IDF_PATH}/components/bt/include
