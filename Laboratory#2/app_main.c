@@ -33,25 +33,20 @@ static void setOutputLevel(bool state){
     gpio_set_level(GPIO_OUTPUT_IO_0, state ? 1 : 0);
 }
 
-// static struct __attribute__((packed)) {
-//     uint8_t contact;
-//     uint8_t heart_rate;
-// } hrm = {
-//     .contact = 0x06,
-//     .heart_rate = 80
-// };
-
-//static uint8_t contact;
-static uint8_t heart_rate;
-static xTimerHandle timer;
-
 static int GetHeartRateValue(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {   
     // Set random value for heart_rate from 0 to 255
+    static struct __attribute__((packed)) {
+        uint8_t contact;
+        uint8_t heart_rate;
+    } hrm = {
+        .contact = 0x06,
+        .heart_rate = 80
+    };
 
     //hrm.heart_rate = esp_random();
-    heart_rate = esp_random();
+    hrm.heart_rate = esp_random();
 
-    int rc = os_mbuf_append(ctxt->om, &heart_rate, sizeof(heart_rate)); //&hrm
+    int rc = os_mbuf_append(ctxt->om, &hrm, sizeof(hrm)); //&hrm
     return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
 }
 
@@ -71,7 +66,7 @@ static const struct ble_gatt_svc_def kBleServices[] = {
                 // characteristic: Heart-rate measurement
                 .uuid = BLE_UUID16_DECLARE(GATT_HRS_MEASUREMENT_UUID),
                 .access_cb = GetHeartRateValue,
-                .val_handle = &heart_rate, // &hrm
+                //.val_handle = &hrm, 
                 .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
             }, {
                 // characteristic: Body sensor location
@@ -175,9 +170,6 @@ void app_main(void) {
 
     // Make device discoverable
     StartAdvertisement();
-
-    timer = xTimerCreate("timer", pdMS_TO_TICKS(1000), pdTRUE, (void *)0, GetAndNotifyValues);
-    xTimerStart(timer, 1);
 
 error:
     while (1) {
