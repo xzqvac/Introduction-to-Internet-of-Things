@@ -63,8 +63,8 @@
 #define CMD_CALIBRATE                           0x71    
 #define CMD_TRIGGER_MEAS                        0xAC
 
-static float temperature;
-static float humidity;
+static int16_t temperature;
+static uint16_t humidity;
 
 static xTimerHandle timer;
 static uint16_t conn_handle;
