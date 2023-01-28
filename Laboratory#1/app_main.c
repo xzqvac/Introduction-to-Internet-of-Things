@@ -26,6 +26,9 @@
 // Output for diode
 #define GPIO_OUTPUT_IO_0                        GPIO_NUM_4
 
+static xTimerHandle timer;
+static uint16_t conn_handle;
+static uint16_t heart_rate_handle;
 
 // Set diode state
 static void setOutputLevel(bool state){
@@ -33,25 +36,19 @@ static void setOutputLevel(bool state){
     gpio_set_level(GPIO_OUTPUT_IO_0, state ? 1 : 0);
 }
 
-// static struct __attribute__((packed)) {
-//     uint8_t contact;
-//     uint8_t heart_rate;
-// } hrm = {
-//     .contact = 0x06,
-//     .heart_rate = 80
-// };
-
-//static uint8_t contact;
-static uint8_t heart_rate;
-static xTimerHandle timer;
+// Struct for storing data
+static struct __attribute__((packed)) {
+    uint8_t contact;
+    uint16_t heart_rate;
+} hrm = {
+    .contact = 0x06,
+    .heart_rate = 0x00
+};
 
 static int GetHeartRateValue(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg) {   
-    // Set random value for heart_rate from 0 to 255
+    hrm.heart_rate = esp_random();
 
-    //hrm.heart_rate = esp_random();
-    heart_rate = esp_random();
-
-    int rc = os_mbuf_append(ctxt->om, &heart_rate, sizeof(heart_rate)); //&hrm
+    int rc = os_mbuf_append(ctxt->om, &hrm, sizeof(hrm)); //&hrm
     return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
 }
 
@@ -71,7 +68,7 @@ static const struct ble_gatt_svc_def kBleServices[] = {
                 // characteristic: Heart-rate measurement
                 .uuid = BLE_UUID16_DECLARE(GATT_HRS_MEASUREMENT_UUID),
                 .access_cb = GetHeartRateValue,
-                .val_handle = &heart_rate, // &hrm
+                .val_handle = &heart_rate_handle, // &hrm
                 .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
             }, {
                 // characteristic: Body sensor location
@@ -95,6 +92,7 @@ static int OnBleGapEvent(struct ble_gap_event *event, void *arg) {
         case BLE_GAP_EVENT_CONNECT:
             ESP_LOGI("BLE GAP Event", "Connected");
             setOutputLevel(true);
+            conn_handle = event->connect.conn_handle;
             break;
 
         case BLE_GAP_EVENT_DISCONNECT:
@@ -138,6 +136,16 @@ static void StartBleService(void *param) {
 
     nimble_port_run();
     nimble_port_freertos_deinit();
+}
+
+void GenerateAndNotifyValues()
+{       
+        hrm.heart_rate = (uint16_t)esp_random();  
+        int rc;
+        struct os_mbuf *om;
+
+        om = ble_hs_mbuf_from_flat(&hrm.heart_rate, sizeof(hrm.heart_rate));
+        rc = ble_gattc_notify_custom(conn_handle, heart_rate_handle, om);
 }
 
 void app_main(void) {
