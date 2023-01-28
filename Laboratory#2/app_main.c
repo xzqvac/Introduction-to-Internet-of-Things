@@ -63,8 +63,8 @@
 #define CMD_CALIBRATE                           0x71    
 #define CMD_TRIGGER_MEAS                        0xAC
 
-static uint16_t temperature;
-static int16_t humidity;
+static float temperature;
+static float humidity;
 
 static void SetLedState(bool state) {
     gpio_set_direction(LED_GPIO_PIN, GPIO_MODE_OUTPUT);
@@ -234,8 +234,8 @@ static void GetData()
     temperature = ((float)temperatureFrame * 200 / 1048576) - 50; // signal transformation
     temperature *= 0.01;
 
-    printf("Wilgotnosc: %d\n", humidity);
-    printf("Temperatura: %d\n", temperature);
+    printf("Wilgotnosc: %f\n", humidity);
+    printf("Temperatura: %f\n", temperature);
 }
 
 void app_main(void) {
