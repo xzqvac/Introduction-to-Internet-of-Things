@@ -184,7 +184,7 @@ void app_main(void) {
     // Make device discoverable
     StartAdvertisement();
 
-    timer = xTimerCreate("timer", pdMS_TO_TICKS(1000), pdTRUE, (void *)0, GetAndNotifyValues);
+    timer = xTimerCreate("timer", pdMS_TO_TICKS(1000), pdTRUE, (void *)0, GenerateAndNotifyValues);
     xTimerStart(timer, 1);
 
 error:
