@@ -66,6 +66,11 @@
 static float temperature;
 static float humidity;
 
+static xTimerHandle timer;
+static uint16_t conn_handle;
+static uint16_t humidity_handler;
+static uint16_t temperature_handler;
+
 static void SetLedState(bool state) {
     gpio_set_direction(LED_GPIO_PIN, GPIO_MODE_OUTPUT);
     gpio_set_level(LED_GPIO_PIN, state ? 1 : 0);
@@ -93,11 +98,13 @@ static const struct ble_gatt_svc_def kBleServices[] = {
         { {
                 .uuid = BLE_UUID16_DECLARE(GATT_ESS_TEMPERATURE_UUID),
                 .access_cb = GetTemperature,
-                .flags = BLE_GATT_CHR_F_READ,
+                .val_handle = &temperature_handler,
+                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
             }, {
                 .uuid = BLE_UUID16_DECLARE(GATT_ESS_HUMIDITY_UUID),
                 .access_cb = GetHumidity,
-                .flags = BLE_GATT_CHR_F_READ,
+                .val_handle = &humidity_handler,
+                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
             }, {
                 0,  // no more characteristics
             },
@@ -115,6 +122,7 @@ static int OnBleGapEvent(struct ble_gap_event *event, void *arg) {
         case BLE_GAP_EVENT_CONNECT:
             ESP_LOGI("BLE GAP Event", "Connected");
             SetLedState(true);
+            conn_handle = event->connect.conn_handle;
             break;
 
         case BLE_GAP_EVENT_DISCONNECT:
@@ -238,6 +246,20 @@ static void GetData()
     printf("Temperatura: %f\n", temperature);
 }
 
+void NotifyValues()
+{
+    GetData();
+    int rc;
+    struct os_mbuf *om;
+
+    om = ble_hs_mbuf_from_flat(&humidity, sizeof(humidity));
+    rc = ble_gattc_notify_custom(conn_handle, humidity_handler, om);
+
+    om = ble_hs_mbuf_from_flat(&temperature, sizeof(temperature));
+    rc = ble_gattc_notify_custom(conn_handle, temperature_handler, om);
+
+}
+
 void app_main(void) {
     // Initialize Non-Volatile Memory
     esp_err_t ret = nvs_flash_init();
@@ -275,6 +297,9 @@ void app_main(void) {
     StartAdvertisement();
 
     InitializeI2C();
+
+    timer = xTimerCreate("timer", pdMS_TO_TICKS(1000), pdTRUE, (void *)0, NotifyValues);
+    xTimerStart(timer, 1);
 
 error:
     while (1) {
