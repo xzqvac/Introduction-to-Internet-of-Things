@@ -4,6 +4,13 @@
 
 static const char *TAG_MQTT = "WIFI STA";
 
+static void log_error_if_nonzero(const char *message, int error_code)
+{
+    if (error_code != 0) {
+        ESP_LOGE(TAG_MQTT, "Last error %s: 0x%x", message, error_code);
+    }
+}
+
 // Client event loop
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
