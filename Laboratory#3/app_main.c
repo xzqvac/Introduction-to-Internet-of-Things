@@ -12,6 +12,7 @@
 #include "lwip/sys.h"
 
 #include "include/wifi.h"
+#include "include/mqtt.h"
 
 void app_main(void)
 {
@@ -28,4 +29,5 @@ void app_main(void)
     }
     ESP_ERROR_CHECK(ret);
     ConnectWifi();
+    mqtt_app_start();
 }
