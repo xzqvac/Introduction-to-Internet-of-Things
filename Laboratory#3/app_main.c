@@ -13,7 +13,7 @@
 
 #include "include/wifi.h"
 #include "include/mqtt.h"
-#include "include/sensor.h"
+
 
 void app_main(void)
 {
