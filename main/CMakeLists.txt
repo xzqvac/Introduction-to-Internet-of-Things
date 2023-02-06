@@ -1,5 +1,5 @@
 idf_component_register(
-    SRCS    "../Laboratory#1/app_main.c"
+    SRCS    "../Laboratory#3/app_main.c"
 
     INCLUDE_DIRS    ${CMAKE_SOURCE_DIR}/main
                     $ENV{IDF_PATH}/components/bt/include
@@ -7,5 +7,5 @@ idf_component_register(
                     $ENV{IDF_PATH}/components/bt/host/nimble/nimble/nimble/host/include/host
                     $ENV{IDF_PATH}/components/driver/include
 
-    REQUIRES soc nvs_flash driver bt console
+    REQUIRES soc nvs_flash driver bt console mqtt
 )
