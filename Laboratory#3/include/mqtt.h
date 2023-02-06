@@ -30,7 +30,19 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     switch ((esp_mqtt_event_id_t)event_id) {
     case MQTT_EVENT_CONNECTED:
         ESP_LOGI(TAG_MQTT, "MQTT_EVENT_CONNECTED");
-        msg_id = esp_mqtt_client_publish(client, "/topic/qos1", "data_3", 0, 1, 0);
+
+        getData();
+
+        char temperature_string[8];
+        sprintf(temperature_string, "%f", temperature / 100.f);
+
+        char humidity_string[8];
+        sprintf(humidity_string, "%f", humidity / 100.f);
+
+        msg_id = esp_mqtt_client_publish(client, "/topic/temperature323778", temperature_string, 0, 1, 0);
+        ESP_LOGI(TAG_MQTT, "sent publish successful, msg_id=%d", msg_id);
+
+        msg_id = esp_mqtt_client_publish(client, "/topic/humidity323778", humidity_string, 0, 1, 0);
         ESP_LOGI(TAG_MQTT, "sent publish successful, msg_id=%d", msg_id);
 
         msg_id = esp_mqtt_client_subscribe(client, "/topic/qos0", 0);

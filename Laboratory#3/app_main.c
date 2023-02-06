@@ -32,6 +32,6 @@ void app_main(void)
 
     InitializeI2C();
     ConnectWifi();
-    GetData();
+
     mqtt_app_start();
 }
