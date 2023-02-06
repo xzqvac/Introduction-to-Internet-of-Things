@@ -29,7 +29,9 @@ void app_main(void)
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
+
+    InitializeI2C();
     ConnectWifi();
-    mqtt_app_start();
     GetData();
+    mqtt_app_start();
 }
