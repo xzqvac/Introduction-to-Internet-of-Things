@@ -85,3 +85,36 @@ esp_err_t Http_event_handler(esp_http_client_event_t *evt)
     }
     return ESP_OK;
 }
+
+static void http_rest_with_url(void)
+{
+    char local_response_buffer[MAX_HTTP_OUTPUT_BUFFER] = {0};
+
+    esp_http_client_config_t config = {
+        .host = "httpbin.org",
+        .path = "/get",
+        .query = "esp",
+        .event_handler = Http_event_handler,
+        .user_data = local_response_buffer,        // Pass address of local buffer to get response
+    };
+    esp_http_client_handle_t client = esp_http_client_init(&config);
+
+    esp_http_client_set_method(client, HTTP_METHOD_PUT);
+    esp_http_client_set_header(client, "Authorization", "Bearer " DEVICE_TOKEN);
+    esp_http_client_set_header(client, "Content-Type", "application/json");
+
+
+    esp_err_t err = esp_http_client_perform(client);
+
+    err = esp_http_client_perform(client);
+    if (err == ESP_OK) 
+    {
+        ESP_LOGI(TAG_HTTP, "HTTP PUT Status = %d", esp_http_client_get_status_code(client));
+    } 
+
+    else 
+    {
+        ESP_LOGE(TAG_HTTP, "HTTP PUT request failed: %s", esp_err_to_name(err));
+    }
+
+}
