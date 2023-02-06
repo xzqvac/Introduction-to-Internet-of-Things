@@ -83,6 +83,6 @@ static void GetData()
     temperature = ((float)temperatureFrame * 200 / 1048576) - 50; // signal transformation
     temperature *= 0.01;
 
-    printf("Wilgotnosc: %f\n", humidity);
-    printf("Temperatura: %f\n", temperature);
+    //printf("Wilgotnosc: %f\n", humidity);
+    //printf("Temperatura: %f\n", temperature);
 }
