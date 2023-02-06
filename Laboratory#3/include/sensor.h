@@ -17,6 +17,10 @@
 
 static float humidity, temperature;
 
+static void WaitMs(unsigned delay) {
+    vTaskDelay(delay / portTICK_PERIOD_MS);
+}
+
 static void InitializeI2C(void) {
     i2c_config_t conf = {
         .mode = I2C_MODE_MASTER,
