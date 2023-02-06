@@ -15,7 +15,8 @@
 #define CMD_CALIBRATE                           0x71    
 #define CMD_TRIGGER_MEAS                        0xAC
 
-static float humidity, temperature;
+static int16_t temperature;
+static uint16_t humidity;
 
 static void WaitMs(unsigned delay) {
     vTaskDelay(delay / portTICK_PERIOD_MS);

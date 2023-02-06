@@ -1,4 +1,5 @@
 #include "mqtt_client.h"
+#include "sensor.h"
 
 #define CONFIG_BROKER_URL                       "mqtt://broker.hivemq.com"
 
@@ -31,12 +32,12 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     case MQTT_EVENT_CONNECTED:
         ESP_LOGI(TAG_MQTT, "MQTT_EVENT_CONNECTED");
 
-        getData();
+        GetData();
 
-        char temperature_string[8];
-        sprintf(temperature_string, "%f", temperature / 100.f);
+        char temperature_string[16];
+        sprintf(temperature_string, "%f", temperature * 100.f);
 
-        char humidity_string[8];
+        char humidity_string[16];
         sprintf(humidity_string, "%f", humidity / 100.f);
 
         msg_id = esp_mqtt_client_publish(client, "/topic/temperature323778", temperature_string, 0, 1, 0);
