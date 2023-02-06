@@ -14,6 +14,7 @@
 #include "include/wifi.h"
 #include "include/mqtt.h"
 
+static xTimerHandle timerMQTT;
 
 void app_main(void)
 {
@@ -33,5 +34,6 @@ void app_main(void)
     InitializeI2C();
     ConnectWifi();
 
-    mqtt_app_start();
+    timerMQTT = xTimerCreate("timerMQTT", pdMS_TO_TICKS(10000), pdTRUE, (void *)0, mqtt_app_start);
+    xTimerStart(timerMQTT, 1);
 }
