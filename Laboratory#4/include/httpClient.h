@@ -1,5 +1,8 @@
 #include "esp_http_client.h"
 
+#define MAX_HTTP_RECV_BUFFER 512
+#define MAX_HTTP_OUTPUT_BUFFER 2048
+
 static const char *TAG_HTTP = "HTTP_CLIENT";
 
 esp_err_t Http_event_handler(esp_http_client_event_t *evt)
